@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🚛 Трекер техники - PNOTRANSPORT</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Шапка -->
+    <header class="header">
+        <h1>🏗️ PNOTRANSPORT</h1>
+        <p>Трекер техники | <span id="currentTime" class="current-time"></span></p>
+    </header>
+
+    <!-- Информация о смене -->
+    <div class="shift-info">
+        <span>🕐 Пересменка: 07-08 | 19-20</span>
+        <span id="currentShift"></span>
+        <span id="currentShiftBadge"></span>
+    </div>
+
+    <!-- Контейнер уведомлений -->
+    <div id="alertsContainer"></div>
+
+    <!-- Секция: Быстрое назначение -->
+    <section id="section-quick" class="section active">
+        <div class="quick-assign">
+            <h3>⚡ Быстрое назначение <span id="currentShiftBadgeQuick"></span></h3>
+            <div class="form-group">
+                <label>Тип техники</label>
+                <select id="quickType" onchange="filterQuickEquipment()">
+                    <option value="">Все типы</option>
+                    <option value="avtokran">🏗️ Автокран</option>
+                    <option value="polupricep">🚛 Полуприцеп</option>
+                    <option value="tyagach">🚚 Тягач</option>
+                    <option value="ppu">⚙️ ППУ</option>
+                    <option value="ca320">🔧 ЦА-320</option>
+                    <option value="akn">🚰 АКН</option>
+                    <option value="amkador">🚜 Амкодор</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>База</label>
+                <select id="quickBase" onchange="filterQuickEquipment()">
+                    <option value="">Все базы</option>
+                    <option value="БСО-1">БСО-1</option>
+                    <option value="БСО-2">БСО-2</option>
+                    <option value="КП-135">КП-135</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Техника</label>
+                <select id="quickEquipment">
+                    <option value="">-- Выберите --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Бригада</label>
+                <input type="text" id="quickBrigade" placeholder="бр 12">
+            </div>
+            <div class="form-group">
+                <label>Время работы (ч)</label>
+                <input type="number" id="quickWorkHours" value="4" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Время пути (ч)</label>
+                <input type="number" id="quickTravelHours" value="0" step="0.01">
+            </div>
+            <button class="btn btn-success" onclick="quickAssign()" style="width: 100%;">
+                📞 Назначить и звонить
+            </button>
+        </div>
+        <div id="quickStats"></div>
+    </section>
+
+    <!-- Секция: В работе -->
+    <section id="section-active" class="section">
+        <h2>🔴 В работе</h2>
+        <input type="text" class="search-box" id="searchActive" placeholder="🔍 Поиск по бригаде..." oninput="renderActiveCards()">
+        <div class="filter-row">
+            <select id="filterType" onchange="renderActiveCards()">
+                <option value="all">Все типы</option>
+                <option value="avtokran">Автокран</option>
+                <option value="polupricep">Полуприцеп</option>
+                <option value="tyagach">Тягач</option>
+                <option value="ppu">ППУ</option>
+                <option value="ca320">ЦА-320</option>
+                <option value="akn">АКН</option>
+                <option value="amkador">Амкодор</option>
+            </select>
+            <select id="filterStatus" onchange="renderActiveCards()">
+                <option value="all">Все</option>
+                <option value="working">В работе</option>
+                <option value="soon">Скоро</option>
+                <option value="ready">Готово</option>
+            </select>
+        </div>
+        <div id="activeCards"></div>
+        <div id="activeEmpty" class="empty-state">
+            <div class="icon">📋</div>
+            <p>Нет техники в работе</p>
+        </div>
+    </section>
+
+    <!-- Секция: Ремонт -->
+    <section id="section-repair" class="section">
+        <h2>🔧 В ремонте</h2>
+        <div class="repair-stats">
+            <h3>📊 Статистика ремонта</h3>
+            <div class="repair-stats-grid">
+                <div class="repair-stat-item">
+                    <strong id="totalRepair">0</strong>
+                    <span>В ремонте</span>
+                </div>
+                <div class="repair-stat-item">
+                    <strong id="todayRepair">0</strong>
+                    <span>Сегодня сломалось</span>
+                </div>
+            </div>
+        </div>
+        <div id="repairCards"></div>
+        <div id="repairEmpty" class="empty-state">
+            <div class="icon">✅</div>
+            <p>Вся техника исправна</p>
+        </div>
+    </section>
+
+    <!-- Секция: История -->
+    <section id="section-history" class="section">
+        <h2>📜 История движений</h2>
+        <div class="export-btn" onclick="exportHistory()">
+            📤 Экспорт истории за 30 дней
+        </div>
+        <div class="filter-row">
+            <select id="historyPeriod" onchange="renderHistoryCards()">
+                <option value="7">За 7 дней</option>
+                <option value="14">За 14 дней</option>
+                <option value="30" selected>За 30 дней</option>
+                <option value="90">За 90 дней</option>
+                <option value="all">Вся история</option>
+            </select>
+            <select id="historyType" onchange="renderHistoryCards()">
+                <option value="all">Все типы</option>
+                <option value="avtokran">Автокран</option>
+                <option value="polupricep">Полуприцеп</option>
+                <option value="tyagach">Тягач</option>
+                <option value="ppu">ППУ</option>
+                <option value="ca320">ЦА-320</option>
+                <option value="akn">АКН</option>
+                <option value="amkador">Амкодор</option>
+            </select>
+        </div>
+        <input type="text" class="search-box" id="searchHistory" placeholder="🔍 Поиск по бригаде или № техники..." oninput="renderHistoryCards()">
+        <div id="historyCards"></div>
+        <div id="historyEmpty" class="empty-state">
+            <div class="icon">📜</div>
+            <p>История пуста</p>
+        </div>
+    </section>
+
+    <!-- Секция: База -->
+    <section id="section-database" class="section">
+        <h2>📚 База техники</h2>
+        <button class="btn btn-primary" onclick="openAddDbModal()" style="width: 100%; margin-bottom: 15px;">
+            ➕ Добавить технику
+        </button>
+        <input type="text" class="search-box" id="searchDb" placeholder="🔍 Поиск..." oninput="renderDatabaseCards()">
+        <div class="filter-row">
+            <select id="filterDbType" onchange="renderDatabaseCards()">
+                <option value="all">Все типы</option>
+                <option value="avtokran">Автокран</option>
+                <option value="polupricep">Полуприцеп</option>
+                <option value="tyagach">Тягач</option>
+                <option value="ppu">ППУ</option>
+                <option value="ca320">ЦА-320</option>
+                <option value="akn">АКН</option>
+                <option value="amkador">Амкодор</option>
+            </select>
+        </div>
+        <div id="databaseCards"></div>
+        <div id="dbEmpty" class="empty-state">
+            <div class="icon">📚</div>
+            <p>База пуста</p>
+        </div>
+    </section>
+
+    <!-- Нижняя навигация -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="showSection('quick', event)">
+            <span class="icon">⚡</span>
+            <span>Назначить</span>
+        </button>
+        <button class="nav-item" onclick="showSection('active', event)">
+            <span class="icon">🔴</span>
+            <span>В работе</span>
+        </button>
+        <button class="nav-item" onclick="showSection('repair', event)">
+            <span class="icon">🔧</span>
+            <span>Ремонт</span>
+        </button>
+        <button class="nav-item" onclick="showSection('history', event)">
+            <span class="icon">📜</span>
+            <span>История</span>
+        </button>
+        <button class="nav-item" onclick="showSection('database', event)">
+            <span class="icon">📚</span>
+            <span>База</span>
+        </button>
+    </nav>
+
+    <!-- Статус бар -->
+    <div class="status-bar" id="statusBar"></div>
+
+    <!-- Модальные окна -->
+    <div id="callModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>📞 Звонок водителю</span>
+                <button class="modal-close" onclick="closeCallModal()">&times;</button>
+            </div>
+            <div id="callModalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCallModal()">Закрыть</button>
+                <button class="btn btn-danger" onclick="openRepairFromCall()">🔧 В ремонт</button>
+                <button class="btn btn-success" id="confirmAssignBtn" onclick="confirmQuickAssign()" style="display:none;">
+                    ✅ Подтвердить
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>✏️ Редактирование</span>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div id="editModalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditModal()">Отмена</button>
+                <button class="btn btn-success" onclick="saveEdit()">💾 Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="repairModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>🔧 В ремонт</span>
+                <button class="modal-close" onclick="closeRepairModal()">&times;</button>
+            </div>
+            <div id="repairModalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeRepairModal()">Отмена</button>
+                <button class="btn btn-danger" onclick="saveRepair()">🔧 В ремонт</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dbEditModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>✏️ Редактирование</span>
+                <button class="modal-close" onclick="closeDbEditModal()">&times;</button>
+            </div>
+            <div id="dbEditModalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDbEditModal()">Отмена</button>
+                <button class="btn btn-success" onclick="saveDbEdit()">💾 Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="addDbModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>➕ Добавить технику</span>
+                <button class="modal-close" onclick="closeAddDbModal()">&times;</button>
+            </div>
+            <div id="addDbModalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddDbModal()">Отмена</button>
+                <button class="btn btn-success" onclick="addToDatabase()">💾 Добавить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="historyDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>📋 Детали назначения</span>
+                <button class="modal-close" onclick="closeHistoryDetailModal()">&times;</button>
+            </div>
+            <div id="historyDetailBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeHistoryDetailModal()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Подключение скриптов -->
+    <script src="js/config.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/logic.js"></script>
+    <script src="js/modals.js"></script>
+    <script src="js/assignment.js"></script>
+    <script src="js/history.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
